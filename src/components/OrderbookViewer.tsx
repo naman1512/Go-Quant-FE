@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { VENUES, formatSymbolForDisplay } from "@/lib/exchanges";
 import { calculateOrderMetrics, calculateOrderbookImbalance, getSpreadInfo, formatCurrency, formatPercentage, formatQuantity, type OrderbookLevel } from "@/lib/marketCalculations";
 import { WebSocketManager } from "@/lib/webSocketManager";
@@ -105,13 +105,27 @@ const OrderbookViewer = ({ venue, symbol, simulatedOrder }: OrderbookViewerProps
   const spreadInfo = getSpreadInfo(orderbook);
   const imbalance = calculateOrderbookImbalance(orderbook);
   
-  let orderMetrics = null;
-  if (simulatedOrder && simulatedOrder.quantity) {
-    orderMetrics = calculateOrderMetrics(orderbook, simulatedOrder);
-  }
+  // Memoize order metrics to prevent recalculation on every render
+  const orderMetrics = useMemo(() => {
+    if (simulatedOrder && simulatedOrder.quantity) {
+      return calculateOrderMetrics(orderbook, simulatedOrder);
+    }
+    return null;
+  }, [orderbook, simulatedOrder]);
 
-  // Connection status indicator
-  const connectionStatus = (
+  // Memoize highlighted price levels to prevent flickering
+  const highlightedPrices = useMemo(() => {
+    if (!simulatedOrder || !simulatedOrder.price) return { buy: null, sell: null };
+    
+    const price = Number(simulatedOrder.price);
+    return {
+      buy: simulatedOrder.side === "buy" ? price : null,
+      sell: simulatedOrder.side === "sell" ? price : null
+    };
+  }, [simulatedOrder]);
+
+  // Memoize connection status to prevent flickering
+  const connectionStatus = useMemo(() => (
     <div className="flex flex-col gap-1 text-xs">
       <div className="flex items-center gap-2">
         <div className={`w-2 h-2 rounded-full ${
@@ -148,7 +162,7 @@ const OrderbookViewer = ({ venue, symbol, simulatedOrder }: OrderbookViewerProps
         </div>
       )}
     </div>
-  );
+  ), [wsState, lastUpdate, manualReconnect]);
 
   if (orderbook.bids.length === 0 && orderbook.asks.length === 0) {
     return (
@@ -283,14 +297,12 @@ const OrderbookViewer = ({ venue, symbol, simulatedOrder }: OrderbookViewerProps
               <div>Quantity</div>
               <div>Total</div>
             </div>
-            {orderbook.bids.map((level: OrderbookLevel, idx: number) => {
-              const isHighlighted = simulatedOrder && 
-                simulatedOrder.side === "buy" && 
-                Number(simulatedOrder.price) === level.price;
+            {orderbook.bids.map((level: OrderbookLevel) => {
+              const isHighlighted = highlightedPrices.buy === level.price;
               
               return (
                 <div 
-                  key={idx}
+                  key={`bid-${level.price}`}
                   className={`grid grid-cols-3 gap-2 text-sm py-1 px-2 rounded transition-colors ${
                     isHighlighted 
                       ? "bg-yellow-400/20 border-l-4 border-yellow-400" 
@@ -317,14 +329,12 @@ const OrderbookViewer = ({ venue, symbol, simulatedOrder }: OrderbookViewerProps
               <div>Quantity</div>
               <div>Total</div>
             </div>
-            {orderbook.asks.map((level: OrderbookLevel, idx: number) => {
-              const isHighlighted = simulatedOrder && 
-                simulatedOrder.side === "sell" && 
-                Number(simulatedOrder.price) === level.price;
+            {orderbook.asks.map((level: OrderbookLevel) => {
+              const isHighlighted = highlightedPrices.sell === level.price;
               
               return (
                 <div 
-                  key={idx}
+                  key={`ask-${level.price}`}
                   className={`grid grid-cols-3 gap-2 text-sm py-1 px-2 rounded transition-colors ${
                     isHighlighted 
                       ? "bg-yellow-400/20 border-l-4 border-yellow-400" 
@@ -431,4 +441,4 @@ const OrderbookViewer = ({ venue, symbol, simulatedOrder }: OrderbookViewerProps
   );
 };
 
-export default OrderbookViewer;
+export default memo(OrderbookViewer);
