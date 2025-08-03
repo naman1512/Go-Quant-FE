@@ -29,7 +29,7 @@ export const WEBSOCKET_CONFIGS: { [key: string]: WebSocketConfig } = {
       op: 'subscribe',
       args: [{
         channel: 'books',
-        instId: 'BTC-USDT'
+        instId: 'BTC-USDT' // This should be dynamic based on selected symbol
       }]
     },
     name: 'OKX',
@@ -270,6 +270,7 @@ export class WebSocketManager {
   private maxReconnectAttempts = 3;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private demoInterval: NodeJS.Timeout | null = null;
+  private messageCount = 0;
 
   constructor(
     exchange: string,
@@ -299,6 +300,11 @@ export class WebSocketManager {
         if (this.config.subscriptionMessage && this.ws) {
           console.log(`Sending subscription to ${this.config.name}:`, this.config.subscriptionMessage);
           this.ws.send(JSON.stringify(this.config.subscriptionMessage));
+          
+          // Set a timeout to check if we receive data
+          setTimeout(() => {
+            console.log(`${this.config.name}: Checking for data after 10 seconds...`);
+          }, 10000);
         } else {
           console.log(`No subscription message for ${this.config.name}`);
         }
@@ -320,6 +326,11 @@ export class WebSocketManager {
             this.onMessage(orderbook);
           } else {
             console.warn(`${this.config.name} parsed orderbook but no valid data:`, orderbook);
+            // Count total messages received for debugging
+            this.messageCount++;
+            if (this.messageCount > 5) {
+              console.warn(`${this.config.name}: Received ${this.messageCount} messages but no orderbook data yet. Check proxy server data flow.`);
+            }
           }
         } catch (error) {
           console.warn(`Failed to parse ${this.config.name} WebSocket message:`, error, event.data);
