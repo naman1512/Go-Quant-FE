@@ -34,16 +34,56 @@ export const WEBSOCKET_CONFIGS: { [key: string]: WebSocketConfig } = {
     },
     name: 'OKX',
     parseMessage: (data: unknown): OrderbookData | null => {
-      const parsed = data as { data?: Array<{ bids?: string[][]; asks?: string[][] }> };
-      if (parsed.data && parsed.data[0]) {
-        const orderbook = parsed.data[0];
+      console.log('OKX raw message:', JSON.stringify(data, null, 2));
+      
+      const parsed = data as Record<string, unknown>;
+      
+      // Skip connection acknowledgment messages
+      if (parsed.type === 'connected' || parsed.type === 'pong' || parsed.type === 'subscription') {
+        console.log('OKX connection/control message, skipping:', parsed.type);
+        return null;
+      }
+      
+      // Format 1: Standard OKX response with data array
+      if (parsed.data && Array.isArray(parsed.data) && parsed.data.length > 0) {
+        const orderbook = parsed.data[0] as Record<string, unknown>;
         if (orderbook.bids && orderbook.asks) {
+          console.log('OKX format 1 matched');
+          const bids = orderbook.bids as string[][];
+          const asks = orderbook.asks as string[][];
           return {
-            bids: orderbook.bids.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
-            asks: orderbook.asks.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
+            bids: bids.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
+            asks: asks.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
           };
         }
       }
+      
+      // Format 2: Direct orderbook data
+      if (parsed.bids && parsed.asks) {
+        console.log('OKX format 2 matched');
+        const bids = parsed.bids as string[][];
+        const asks = parsed.asks as string[][];
+        return {
+          bids: bids.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
+          asks: asks.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
+        };
+      }
+      
+      // Format 3: Nested data object
+      if (parsed.data && typeof parsed.data === 'object') {
+        const dataObj = parsed.data as Record<string, unknown>;
+        if (dataObj.bids && dataObj.asks) {
+          console.log('OKX format 3 matched');
+          const bids = dataObj.bids as string[][];
+          const asks = dataObj.asks as string[][];
+          return {
+            bids: bids.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
+            asks: asks.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
+          };
+        }
+      }
+      
+      console.log('No OKX format matched, available keys:', Object.keys(parsed));
       return null;
     }
   },
@@ -59,8 +99,13 @@ export const WEBSOCKET_CONFIGS: { [key: string]: WebSocketConfig } = {
     parseMessage: (data: unknown): OrderbookData | null => {
       console.log('Bybit raw message:', JSON.stringify(data, null, 2));
       
-      // Try multiple possible Bybit message formats
       const parsed = data as Record<string, unknown>;
+      
+      // Skip connection acknowledgment messages
+      if (parsed.type === 'connected' || parsed.type === 'pong' || parsed.op === 'subscribe') {
+        console.log('Bybit connection/control message, skipping:', parsed.type || parsed.op);
+        return null;
+      }
       
       // Format 1: Direct data object
       if (parsed.data && typeof parsed.data === 'object') {
@@ -133,16 +178,59 @@ export const WEBSOCKET_CONFIGS: { [key: string]: WebSocketConfig } = {
     },
     name: 'Deribit',
     parseMessage: (data: unknown): OrderbookData | null => {
-      const parsed = data as { params?: { data?: { bids?: number[][]; asks?: number[][] } } };
-      if (parsed.params?.data) {
-        const orderbook = parsed.params.data;
+      console.log('Deribit raw message:', JSON.stringify(data, null, 2));
+      
+      const parsed = data as Record<string, unknown>;
+      
+      // Skip connection acknowledgment messages
+      if (parsed.type === 'connected' || parsed.id || parsed.jsonrpc) {
+        console.log('Deribit connection/control message, skipping:', parsed.type || 'RPC message');
+        return null;
+      }
+      
+      // Format 1: Standard Deribit response
+      if (parsed.params && typeof parsed.params === 'object') {
+        const params = parsed.params as Record<string, unknown>;
+        if (params.data && typeof params.data === 'object') {
+          const orderbook = params.data as Record<string, unknown>;
+          if (orderbook.bids && orderbook.asks) {
+            console.log('Deribit format 1 matched');
+            const bids = orderbook.bids as number[][];
+            const asks = orderbook.asks as number[][];
+            return {
+              bids: bids.slice(0, 15).map(([price, qty]) => [price, qty]),
+              asks: asks.slice(0, 15).map(([price, qty]) => [price, qty])
+            };
+          }
+        }
+      }
+      
+      // Format 2: Direct data object
+      if (parsed.data && typeof parsed.data === 'object') {
+        const orderbook = parsed.data as Record<string, unknown>;
         if (orderbook.bids && orderbook.asks) {
+          console.log('Deribit format 2 matched');
+          const bids = orderbook.bids as number[][];
+          const asks = orderbook.asks as number[][];
           return {
-            bids: orderbook.bids.slice(0, 15).map(([price, qty]) => [price, qty]),
-            asks: orderbook.asks.slice(0, 15).map(([price, qty]) => [price, qty])
+            bids: bids.slice(0, 15).map(([price, qty]) => [price, qty]),
+            asks: asks.slice(0, 15).map(([price, qty]) => [price, qty])
           };
         }
       }
+      
+      // Format 3: Direct bids/asks
+      if (parsed.bids && parsed.asks) {
+        console.log('Deribit format 3 matched');
+        const bids = parsed.bids as number[][];
+        const asks = parsed.asks as number[][];
+        return {
+          bids: bids.slice(0, 15).map(([price, qty]) => [price, qty]),
+          asks: asks.slice(0, 15).map(([price, qty]) => [price, qty])
+        };
+      }
+      
+      console.log('No Deribit format matched, available keys:', Object.keys(parsed));
       return null;
     }
   },
