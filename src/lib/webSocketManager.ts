@@ -57,13 +57,65 @@ export const WEBSOCKET_CONFIGS: { [key: string]: WebSocketConfig } = {
     },
     name: 'Bybit',
     parseMessage: (data: unknown): OrderbookData | null => {
-      const parsed = data as { data?: { b?: string[][]; a?: string[][] } };
-      if (parsed.data && parsed.data.b && parsed.data.a) {
+      console.log('Bybit raw message:', JSON.stringify(data, null, 2));
+      
+      // Try multiple possible Bybit message formats
+      const parsed = data as Record<string, unknown>;
+      
+      // Format 1: Direct data object
+      if (parsed.data && typeof parsed.data === 'object') {
+        const dataObj = parsed.data as Record<string, unknown>;
+        if (dataObj.b && dataObj.a) {
+          console.log('Bybit format 1 matched');
+          const bids = dataObj.b as string[][];
+          const asks = dataObj.a as string[][];
+          return {
+            bids: bids.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
+            asks: asks.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
+          };
+        }
+      }
+      
+      // Format 2: Topic-based message
+      if (parsed.topic && parsed.data && typeof parsed.data === 'object') {
+        const dataObj = parsed.data as Record<string, unknown>;
+        if (dataObj.b && dataObj.a) {
+          console.log('Bybit format 2 matched');
+          const bids = dataObj.b as string[][];
+          const asks = dataObj.a as string[][];
+          return {
+            bids: bids.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
+            asks: asks.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
+          };
+        }
+      }
+      
+      // Format 3: Snapshot format
+      if (parsed.type === 'snapshot' && parsed.data && typeof parsed.data === 'object') {
+        const orderbook = parsed.data as Record<string, unknown>;
+        if (orderbook.bids && orderbook.asks) {
+          console.log('Bybit format 3 matched');
+          const bids = orderbook.bids as string[][];
+          const asks = orderbook.asks as string[][];
+          return {
+            bids: bids.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
+            asks: asks.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
+          };
+        }
+      }
+      
+      // Format 4: Direct bids/asks
+      if (parsed.bids && parsed.asks) {
+        console.log('Bybit format 4 matched');
+        const bids = parsed.bids as string[][];
+        const asks = parsed.asks as string[][];
         return {
-          bids: parsed.data.b.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
-          asks: parsed.data.a.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
+          bids: bids.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
+          asks: asks.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
         };
       }
+      
+      console.log('No Bybit format matched, available keys:', Object.keys(parsed));
       return null;
     }
   },
@@ -157,19 +209,32 @@ export class WebSocketManager {
         
         // Send subscription message if needed
         if (this.config.subscriptionMessage && this.ws) {
+          console.log(`Sending subscription to ${this.config.name}:`, this.config.subscriptionMessage);
           this.ws.send(JSON.stringify(this.config.subscriptionMessage));
+        } else {
+          console.log(`No subscription message for ${this.config.name}`);
         }
       };
 
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log(`${this.config.name} received message:`, data);
+          
           const orderbook = this.config.parseMessage(data);
           if (orderbook && orderbook.bids.length > 0 && orderbook.asks.length > 0) {
+            console.log(`${this.config.name} parsed orderbook successfully:`, {
+              bidsCount: orderbook.bids.length,
+              asksCount: orderbook.asks.length,
+              bestBid: orderbook.bids[0],
+              bestAsk: orderbook.asks[0]
+            });
             this.onMessage(orderbook);
+          } else {
+            console.warn(`${this.config.name} parsed orderbook but no valid data:`, orderbook);
           }
         } catch (error) {
-          console.warn('Failed to parse WebSocket message:', error);
+          console.warn(`Failed to parse ${this.config.name} WebSocket message:`, error, event.data);
         }
       };
 
