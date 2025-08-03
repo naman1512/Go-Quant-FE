@@ -1,4 +1,4 @@
-// Pure frontend WebSocket manager with CORS-compliant endpoints
+// WebSocket manager for real-time orderbook data with proxy server integration
 interface OrderbookData {
   bids: Array<[number, number]>;
   asks: Array<[number, number]>;
@@ -11,9 +11,91 @@ export interface WebSocketConfig {
   name: string;
 }
 
-// CORS-compliant WebSocket endpoints (these don't have CORS restrictions)
+// Get proxy URL from environment variable
+const getProxyUrl = () => {
+  const baseUrl = process.env.NEXT_PUBLIC_PROXY_URL || 'ws://localhost:8080';
+  // Convert to WSS for production
+  return process.env.NODE_ENV === 'production' 
+    ? baseUrl.replace('ws://', 'wss://').replace('http://', 'https://') 
+    : baseUrl;
+};
+
+// WebSocket configurations using proxy server for OKX, Bybit, and Deribit
 export const WEBSOCKET_CONFIGS: { [key: string]: WebSocketConfig } = {
-  // Binance US - CORS friendly
+  // OKX via proxy server
+  okx: {
+    url: `${getProxyUrl()}/okx`,
+    subscriptionMessage: {
+      op: 'subscribe',
+      args: [{
+        channel: 'books',
+        instId: 'BTC-USDT'
+      }]
+    },
+    name: 'OKX',
+    parseMessage: (data: unknown): OrderbookData | null => {
+      const parsed = data as { data?: Array<{ bids?: string[][]; asks?: string[][] }> };
+      if (parsed.data && parsed.data[0]) {
+        const orderbook = parsed.data[0];
+        if (orderbook.bids && orderbook.asks) {
+          return {
+            bids: orderbook.bids.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
+            asks: orderbook.asks.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
+          };
+        }
+      }
+      return null;
+    }
+  },
+
+  // Bybit via proxy server
+  bybit: {
+    url: `${getProxyUrl()}/bybit`,
+    subscriptionMessage: {
+      op: 'subscribe',
+      args: ['orderbook.1.BTCUSDT']
+    },
+    name: 'Bybit',
+    parseMessage: (data: unknown): OrderbookData | null => {
+      const parsed = data as { data?: { b?: string[][]; a?: string[][] } };
+      if (parsed.data && parsed.data.b && parsed.data.a) {
+        return {
+          bids: parsed.data.b.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
+          asks: parsed.data.a.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
+        };
+      }
+      return null;
+    }
+  },
+
+  // Deribit via proxy server
+  deribit: {
+    url: `${getProxyUrl()}/deribit`,
+    subscriptionMessage: {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'public/subscribe',
+      params: {
+        channels: ['book.BTC-PERPETUAL.100ms']
+      }
+    },
+    name: 'Deribit',
+    parseMessage: (data: unknown): OrderbookData | null => {
+      const parsed = data as { params?: { data?: { bids?: number[][]; asks?: number[][] } } };
+      if (parsed.params?.data) {
+        const orderbook = parsed.params.data;
+        if (orderbook.bids && orderbook.asks) {
+          return {
+            bids: orderbook.bids.slice(0, 15).map(([price, qty]) => [price, qty]),
+            asks: orderbook.asks.slice(0, 15).map(([price, qty]) => [price, qty])
+          };
+        }
+      }
+      return null;
+    }
+  },
+  
+  // Binance US - CORS friendly (fallback)
   binance: {
     url: 'wss://stream.binance.us:9443/ws/btcusdt@depth20@100ms',
     subscriptionMessage: null, // Auto-subscribes via URL
@@ -24,90 +106,6 @@ export const WEBSOCKET_CONFIGS: { [key: string]: WebSocketConfig } = {
         return {
           bids: parsed.bids.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
           asks: parsed.asks.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
-        };
-      }
-      return null;
-    }
-  },
-  
-  // Coinbase Pro - CORS friendly  
-  coinbase: {
-    url: 'wss://ws-feed.pro.coinbase.com',
-    name: 'Coinbase Pro',
-    subscriptionMessage: {
-      type: 'subscribe',
-      product_ids: ['BTC-USD'],
-      channels: ['level2']
-    },
-    parseMessage: (data: unknown): OrderbookData | null => {
-      const parsed = data as { type?: string; bids?: string[][]; asks?: string[][] };
-      if (parsed.type === 'snapshot' && parsed.bids && parsed.asks) {
-        return {
-          bids: parsed.bids.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
-          asks: parsed.asks.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
-        };
-      }
-      return null;
-    }
-  },
-
-  // Kraken - CORS friendly
-  kraken: {
-    url: 'wss://ws.kraken.com',
-    name: 'Kraken',
-    subscriptionMessage: {
-      event: 'subscribe',
-      pair: ['XBT/USD'],
-      subscription: { name: 'book', depth: 25 }
-    },
-    parseMessage: (data: unknown): OrderbookData | null => {
-      const parsed = data as unknown[];
-      if (Array.isArray(parsed) && parsed[1] && typeof parsed[1] === 'object') {
-        const orderbook = parsed[1] as { bs?: string[][]; as?: string[][] };
-        if (orderbook.bs && orderbook.as) {
-          return {
-            bids: orderbook.bs.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)]),
-            asks: orderbook.as.slice(0, 15).map(([price, qty]) => [Number(price), Number(qty)])
-          };
-        }
-      }
-      return null;
-    }
-  },
-
-  // Bitfinex - CORS friendly
-  bitfinex: {
-    url: 'wss://api-pub.bitfinex.com/ws/2',
-    name: 'Bitfinex',
-    subscriptionMessage: {
-      event: 'subscribe',
-      channel: 'book',
-      symbol: 'BTCUSD',
-      prec: 'P0',
-      freq: 'F0',
-      len: '25'
-    },
-    parseMessage: (data: unknown): OrderbookData | null => {
-      const parsed = data as unknown[];
-      if (Array.isArray(parsed) && parsed[1] && Array.isArray(parsed[1]) && Array.isArray(parsed[1][0])) {
-        const orderbook = parsed[1] as number[][];
-        const bids: Array<[number, number]> = [];
-        const asks: Array<[number, number]> = [];
-        
-        orderbook.forEach((entry: number[]) => {
-          if (entry.length >= 3) {
-            const [price, , amount] = entry;
-            if (amount > 0) {
-              bids.push([price, amount]);
-            } else {
-              asks.push([price, Math.abs(amount)]);
-            }
-          }
-        });
-        
-        return {
-          bids: bids.slice(0, 15),
-          asks: asks.slice(0, 15)
         };
       }
       return null;
