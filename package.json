@@ -1,0 +1,47 @@
+{
+  "name": "goquant-orderbook-simulator",
+  "version": "1.0.0",
+  "description": "Real-Time Orderbook Viewer with Order Simulation for GoQuant Assessment",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "axios": "^1.11.0",
+    "d3-scale": "^4.0.2",
+    "lucide-react": "^0.468.0",
+    "next": "15.4.4",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "recharts": "^3.1.0",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/d3-scale": "^4.0.8",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/ws": "^8.5.12",
+    "eslint": "^9",
+    "eslint-config-next": "15.4.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "keywords": [
+    "orderbook",
+    "trading",
+    "cryptocurrency",
+    "real-time",
+    "next.js",
+    "typescript",
+    "websocket"
+  ],
+  "author": "GoQuant Candidate",
+  "license": "MIT"
+}
