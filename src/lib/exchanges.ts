@@ -58,6 +58,8 @@ export const SYMBOL_MAPPINGS: { [symbol: string]: SymbolMapping } = {
 };
 
 export const VENUES = [
+  { label: 'Demo Mode', value: 'demo', description: 'Realistic simulation for testing' },
+  { label: 'Binance US', value: 'binance', description: 'Global crypto exchange (direct connection)' },
   { label: 'OKX', value: 'okx', description: 'Global crypto exchange with advanced trading features' },
   { label: 'Bybit', value: 'bybit', description: 'Professional derivatives trading platform' },
   { label: 'Deribit', value: 'deribit', description: 'Premier options and futures exchange' },
