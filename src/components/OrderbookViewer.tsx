@@ -291,30 +291,34 @@ const OrderbookViewer = ({ venue, symbol, simulatedOrder }: OrderbookViewerProps
             <span className="w-3 h-3 bg-green-400 rounded"></span>
             Bids
           </h3>
-          <div className="space-y-1">
-            <div className="grid grid-cols-3 gap-2 text-xs text-white/60 pb-2 border-b border-white/20">
-              <div>Price</div>
-              <div>Quantity</div>
-              <div>Total</div>
+          <div className="h-96 overflow-y-auto bg-black/20 rounded-lg border border-white/10">
+            <div className="sticky top-0 bg-black/40 backdrop-blur-sm z-10">
+              <div className="grid grid-cols-3 gap-2 text-xs text-white/60 p-2 border-b border-white/20">
+                <div>Price</div>
+                <div>Quantity</div>
+                <div>Total</div>
+              </div>
             </div>
-            {orderbook.bids.map((level: OrderbookLevel) => {
-              const isHighlighted = highlightedPrices.buy === level.price;
-              
-              return (
-                <div 
-                  key={`bid-${level.price}`}
-                  className={`grid grid-cols-3 gap-2 text-sm py-1 px-2 rounded transition-colors ${
-                    isHighlighted 
-                      ? "bg-yellow-400/20 border-l-4 border-yellow-400" 
-                      : "hover:bg-white/5"
-                  }`}
-                >
-                  <div className="text-green-400 font-mono">{formatCurrency(level.price)}</div>
-                  <div className="text-white font-mono">{formatQuantity(level.quantity)}</div>
-                  <div className="text-white/70 font-mono">{formatCurrency(level.price * level.quantity)}</div>
-                </div>
-              );
-            })}
+            <div className="space-y-1 p-2">
+              {orderbook.bids.map((level: OrderbookLevel) => {
+                const isHighlighted = highlightedPrices.buy === level.price;
+                
+                return (
+                  <div 
+                    key={`bid-${level.price}`}
+                    className={`grid grid-cols-3 gap-2 text-sm py-1 px-2 rounded transition-colors ${
+                      isHighlighted 
+                        ? "bg-yellow-400/20 border-l-4 border-yellow-400" 
+                        : "hover:bg-white/5"
+                    }`}
+                  >
+                    <div className="text-green-400 font-mono">{formatCurrency(level.price)}</div>
+                    <div className="text-white font-mono">{formatQuantity(level.quantity)}</div>
+                    <div className="text-white/70 font-mono">{formatCurrency(level.price * level.quantity)}</div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -323,30 +327,34 @@ const OrderbookViewer = ({ venue, symbol, simulatedOrder }: OrderbookViewerProps
             <span className="w-3 h-3 bg-red-400 rounded"></span>
             Asks
           </h3>
-          <div className="space-y-1">
-            <div className="grid grid-cols-3 gap-2 text-xs text-white/60 pb-2 border-b border-white/20">
-              <div>Price</div>
-              <div>Quantity</div>
-              <div>Total</div>
+          <div className="h-96 overflow-y-auto bg-black/20 rounded-lg border border-white/10">
+            <div className="sticky top-0 bg-black/40 backdrop-blur-sm z-10">
+              <div className="grid grid-cols-3 gap-2 text-xs text-white/60 p-2 border-b border-white/20">
+                <div>Price</div>
+                <div>Quantity</div>
+                <div>Total</div>
+              </div>
             </div>
-            {orderbook.asks.map((level: OrderbookLevel) => {
-              const isHighlighted = highlightedPrices.sell === level.price;
-              
-              return (
-                <div 
-                  key={`ask-${level.price}`}
-                  className={`grid grid-cols-3 gap-2 text-sm py-1 px-2 rounded transition-colors ${
-                    isHighlighted 
-                      ? "bg-yellow-400/20 border-l-4 border-yellow-400" 
-                      : "hover:bg-white/5"
-                  }`}
-                >
-                  <div className="text-red-400 font-mono">{formatCurrency(level.price)}</div>
-                  <div className="text-white font-mono">{formatQuantity(level.quantity)}</div>
-                  <div className="text-white/70 font-mono">{formatCurrency(level.price * level.quantity)}</div>
-                </div>
-              );
-            })}
+            <div className="space-y-1 p-2">
+              {orderbook.asks.map((level: OrderbookLevel) => {
+                const isHighlighted = highlightedPrices.sell === level.price;
+                
+                return (
+                  <div 
+                    key={`ask-${level.price}`}
+                    className={`grid grid-cols-3 gap-2 text-sm py-1 px-2 rounded transition-colors ${
+                      isHighlighted 
+                        ? "bg-yellow-400/20 border-l-4 border-yellow-400" 
+                        : "hover:bg-white/5"
+                    }`}
+                  >
+                    <div className="text-red-400 font-mono">{formatCurrency(level.price)}</div>
+                    <div className="text-white font-mono">{formatQuantity(level.quantity)}</div>
+                    <div className="text-white/70 font-mono">{formatCurrency(level.price * level.quantity)}</div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
