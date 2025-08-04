@@ -107,13 +107,13 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-white mb-2">Order Simulation</h2>
-        <p className="text-white/70">Configure your order parameters to see market impact analysis</p>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="text-center mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Order Simulation</h2>
+        <p className="text-white/70 text-sm sm:text-base">Configure your order parameters to see market impact analysis</p>
       </div>
 
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
         {/* Venue Selection */}
         <div className="space-y-2">
           <label htmlFor="venue" className="text-white font-semibold text-sm">
@@ -123,7 +123,7 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
             id="venue" 
             value={venue} 
             onChange={e => setVenue(e.target.value)}
-            className="w-full bg-gray-900 border border-white/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition"
+            className="w-full bg-gray-900 border border-white/30 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition"
           >
             {VENUES.map(v => (
               <option key={v.value} value={v.value} className="bg-gray-900 text-white">
@@ -148,7 +148,7 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
             id="symbol" 
             value={symbol} 
             onChange={e => setSymbol(e.target.value)}
-            className="w-full bg-gray-900 border border-white/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition"
+            className="w-full bg-gray-900 border border-white/30 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition"
           >
             {SYMBOLS.map(s => (
               <option key={s.value} value={s.value} className="bg-gray-900 text-white">
@@ -165,7 +165,7 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
         </div>
 
         {/* Order Type and Side Row */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div className="space-y-2">
             <label htmlFor="orderType" className="text-white font-semibold text-sm">
               Order Type
@@ -174,7 +174,7 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
               id="orderType" 
               value={orderType} 
               onChange={e => setOrderType(e.target.value)}
-              className="w-full bg-gray-900 border border-white/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition"
+              className="w-full bg-gray-900 border border-white/30 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition"
             >
               {ORDER_TYPES.map(o => (
                 <option key={o.value} value={o.value} className="bg-gray-900 text-white">
@@ -183,7 +183,7 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
               ))}
             </select>
             {ORDER_TYPES.find(o => o.value === orderType)?.description && (
-              <p className="text-white/60 text-xs">
+              <p className="text-white/60 text-xs hidden sm:block">
                 {ORDER_TYPES.find(o => o.value === orderType)?.description}
               </p>
             )}
@@ -198,7 +198,7 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
               id="side" 
               value={side} 
               onChange={e => setSide(e.target.value)}
-              className="w-full bg-gray-900 border border-white/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition"
+              className="w-full bg-gray-900 border border-white/30 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition"
             >
               {SIDES.map(s => (
                 <option key={s.value} value={s.value} className="bg-gray-900 text-white">
@@ -207,7 +207,7 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
               ))}
             </select>
             {SIDES.find(s => s.value === side)?.description && (
-              <p className="text-white/60 text-xs">
+              <p className="text-white/60 text-xs hidden sm:block">
                 {SIDES.find(s => s.value === side)?.description}
               </p>
             )}
@@ -228,7 +228,7 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
               placeholder="Enter limit price..." 
               value={price} 
               onChange={e => setPrice(e.target.value)}
-              className="w-full bg-gray-900 border border-white/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition placeholder:text-white/40"
+              className="w-full bg-gray-900 border border-white/30 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition placeholder:text-white/40"
             />
             <p className="text-white/60 text-xs">
               Order will only execute at this price or better
@@ -249,18 +249,18 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
             placeholder="Enter quantity..." 
             value={quantity} 
             onChange={e => setQuantity(e.target.value)}
-            className="w-full bg-gray-900 border border-white/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition placeholder:text-white/40"
+            className="w-full bg-gray-900 border border-white/30 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition placeholder:text-white/40"
           />
           
           {/* Quick Fill Presets */}
-          <div className="flex gap-2 mt-2">
+          <div className="flex flex-wrap gap-2 mt-2">
             <span className="text-white/60 text-xs self-center">Quick fill:</span>
             {QUANTITY_PRESETS.map(preset => (
               <button
                 key={preset.value}
                 type="button"
                 onClick={() => handleQuickFill(preset.value)}
-                className="px-3 py-1 text-xs bg-white/10 hover:bg-white/20 text-white rounded border border-white/20 transition"
+                className="px-2 sm:px-3 py-1 text-xs bg-white/10 hover:bg-white/20 text-white rounded border border-white/20 transition"
               >
                 {preset.label}
               </button>
@@ -279,7 +279,7 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
             id="timing" 
             value={timing} 
             onChange={e => setTiming(Number(e.target.value))}
-            className="w-full bg-gray-900 border border-white/30 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition"
+            className="w-full bg-gray-900 border border-white/30 rounded-lg px-3 sm:px-4 py-2 sm:py-3 text-white text-sm sm:text-base focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition"
           >
             {TIMINGS.map(t => (
               <option key={t.value} value={t.value} className="bg-gray-900 text-white">
@@ -288,18 +288,18 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
             ))}
           </select>
           {TIMINGS.find(t => t.value === timing)?.description && (
-            <p className="text-white/60 text-xs">
+            <p className="text-white/60 text-xs hidden sm:block">
               {TIMINGS.find(t => t.value === timing)?.description}
             </p>
           )}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
           <button 
             type="submit" 
             disabled={isSubmitting}
-            className={`flex-1 font-bold px-6 py-3 rounded-lg transition-all duration-200 ${
+            className={`flex-1 font-bold px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition-all duration-200 text-sm sm:text-base ${
               isSubmitting 
                 ? 'bg-gray-600 text-gray-300 cursor-not-allowed' 
                 : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
@@ -318,7 +318,7 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
           <button 
             type="button" 
             onClick={clearForm}
-            className="px-6 py-3 border border-white/40 text-white font-bold rounded-lg hover:bg-white hover:text-black transition-all duration-200"
+            className="px-4 sm:px-6 py-2 sm:py-3 border border-white/40 text-white font-bold rounded-lg hover:bg-white hover:text-black transition-all duration-200 text-sm sm:text-base"
           >
             Clear
           </button>
@@ -326,33 +326,33 @@ export default function OrderForm({ onSimulate }: OrderFormProps) {
       </form>
 
       {/* Form Summary */}
-      <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-lg p-4 border border-white/10">
+      <div className="bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-lg p-3 sm:p-4 border border-white/10">
         <h3 className="text-white font-semibold mb-2 text-sm">Order Summary</h3>
         <div className="space-y-1 text-xs text-white/70">
           <div className="flex justify-between">
             <span>Exchange:</span>
-            <span className="text-white">{VENUES.find(v => v.value === venue)?.label}</span>
+            <span className="text-white text-right">{VENUES.find(v => v.value === venue)?.label}</span>
           </div>
           <div className="flex justify-between">
             <span>Pair:</span>
-            <span className="text-white">{SYMBOLS.find(s => s.value === symbol)?.label}</span>
+            <span className="text-white text-right">{SYMBOLS.find(s => s.value === symbol)?.label}</span>
           </div>
           <div className="flex justify-between">
             <span>Type:</span>
-            <span className={`${side === 'buy' ? 'text-green-400' : 'text-red-400'}`}>
+            <span className={`text-right ${side === 'buy' ? 'text-green-400' : 'text-red-400'}`}>
               {ORDER_TYPES.find(o => o.value === orderType)?.label} {SIDES.find(s => s.value === side)?.label}
             </span>
           </div>
           {orderType === "limit" && price && (
             <div className="flex justify-between">
               <span>Price:</span>
-              <span className="text-white font-mono">${Number(price).toFixed(2)}</span>
+              <span className="text-white font-mono text-right">${Number(price).toFixed(2)}</span>
             </div>
           )}
           {quantity && (
             <div className="flex justify-between">
               <span>Quantity:</span>
-              <span className="text-white font-mono">{Number(quantity).toFixed(4)}</span>
+              <span className="text-white font-mono text-right">{Number(quantity).toFixed(4)}</span>
             </div>
           )}
         </div>

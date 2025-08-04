@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface DepthChartProps {
   bids: { price: number; quantity: number }[];
@@ -19,16 +19,33 @@ export default function DepthChart({
   height = 200, 
   simulatedOrder 
 }: DepthChartProps) {
+  const [chartDimensions, setChartDimensions] = useState({ width, height });
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (typeof window !== 'undefined') {
+        const maxWidth = Math.min(width, window.innerWidth - 60);
+        const responsiveHeight = window.innerWidth < 640 ? Math.min(height, 150) : height;
+        setChartDimensions({ width: maxWidth, height: responsiveHeight });
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, [width, height]);
+
   if (!bids.length && !asks.length) {
     return (
       <div 
-        className="flex items-center justify-center border border-white/10 rounded-lg"
+        className="flex items-center justify-center border border-white/10 rounded-lg bg-black/20"
         style={{
-          width: `${width}px`,
-          height: `${height}px`
+          width: chartDimensions.width,
+          height: chartDimensions.height
         }}
       >
-        <span className="text-white/60">No depth data available</span>
+        <span className="text-white/60 text-sm">No depth data available</span>
       </div>
     );
   }
@@ -62,20 +79,20 @@ export default function DepthChart({
   );
 
   // Scaling functions
-  const scaleX = (price: number) => ((price - minPrice) / (maxPrice - minPrice || 1)) * width;
-  const scaleY = (volume: number) => height - (volume / (maxVolume || 1)) * height;
+  const scaleX = (price: number) => ((price - minPrice) / (maxPrice - minPrice || 1)) * chartDimensions.width;
+  const scaleY = (volume: number) => chartDimensions.height - (volume / (maxVolume || 1)) * chartDimensions.height;
 
   // Generate path for bids (green, left side)
   const bidPath = depthBids.length > 0 ? 
-    `M 0,${height} ` + 
+    `M 0,${chartDimensions.height} ` + 
     depthBids.map(d => `L ${scaleX(d.price)},${scaleY(d.cumVolume)}`).join(' ') +
-    ` L ${scaleX(depthBids[depthBids.length - 1].price)},${height} Z` : '';
+    ` L ${scaleX(depthBids[depthBids.length - 1].price)},${chartDimensions.height} Z` : '';
 
   // Generate path for asks (red, right side)
   const askPath = depthAsks.length > 0 ? 
-    `M ${scaleX(depthAsks[0].price)},${height} ` +
+    `M ${scaleX(depthAsks[0].price)},${chartDimensions.height} ` +
     depthAsks.map(d => `L ${scaleX(d.price)},${scaleY(d.cumVolume)}`).join(' ') +
-    ` L ${width},${height} Z` : '';
+    ` L ${chartDimensions.width},${chartDimensions.height} Z` : '';
 
   // Simulated order indicator
   let orderIndicator = null;
@@ -90,7 +107,7 @@ export default function DepthChart({
           x1={x}
           y1={0}
           x2={x}
-          y2={height}
+          y2={chartDimensions.height}
           stroke={color}
           strokeWidth={2}
           strokeDasharray="5,5"
@@ -98,7 +115,7 @@ export default function DepthChart({
         />
         <circle
           cx={x}
-          cy={height - 10}
+          cy={chartDimensions.height - 10}
           r={4}
           fill={color}
           stroke="white"
@@ -109,56 +126,63 @@ export default function DepthChart({
   }
 
   return (
-    <div className="relative">
-      <svg width={width} height={height} className="border border-white/10 rounded-lg bg-black/20">
-        {/* Grid lines */}
-        <defs>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-        
-        {/* Bid area (green) */}
-        {bidPath && (
-          <path
-            d={bidPath}
-            fill="rgba(34, 197, 94, 0.2)"
-            stroke="#22c55e"
-            strokeWidth={2}
-          />
-        )}
-        
-        {/* Ask area (red) */}
-        {askPath && (
-          <path
-            d={askPath}
-            fill="rgba(239, 68, 68, 0.2)"
-            stroke="#ef4444"
-            strokeWidth={2}
-          />
-        )}
-        
-        {/* Simulated order indicator */}
-        {orderIndicator}
-        
-        {/* Spread indicator */}
-        {bids.length > 0 && asks.length > 0 && (
-          <rect
-            x={scaleX(bids[0].price)}
-            y={0}
-            width={scaleX(asks[0].price) - scaleX(bids[0].price)}
-            height={height}
-            fill="rgba(255, 255, 0, 0.1)"
-            stroke="rgba(255, 255, 0, 0.3)"
-            strokeWidth={1}
-          />
-        )}
-      </svg>
+    <div className="relative w-full">
+      <div className="overflow-x-auto">
+        <svg 
+          width={chartDimensions.width} 
+          height={chartDimensions.height} 
+          className="border border-white/10 rounded-lg bg-black/20 min-w-0"
+          style={{ minWidth: 300 }}
+        >
+          {/* Grid lines */}
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+          
+          {/* Bid area (green) */}
+          {bidPath && (
+            <path
+              d={bidPath}
+              fill="rgba(34, 197, 94, 0.2)"
+              stroke="#22c55e"
+              strokeWidth={2}
+            />
+          )}
+          
+          {/* Ask area (red) */}
+          {askPath && (
+            <path
+              d={askPath}
+              fill="rgba(239, 68, 68, 0.2)"
+              stroke="#ef4444"
+              strokeWidth={2}
+            />
+          )}
+          
+          {/* Simulated order indicator */}
+          {orderIndicator}
+          
+          {/* Spread indicator */}
+          {bids.length > 0 && asks.length > 0 && (
+            <rect
+              x={scaleX(bids[0].price)}
+              y={0}
+              width={scaleX(asks[0].price) - scaleX(bids[0].price)}
+              height={chartDimensions.height}
+              fill="rgba(255, 255, 0, 0.1)"
+              stroke="rgba(255, 255, 0, 0.3)"
+              strokeWidth={1}
+            />
+          )}
+        </svg>
+      </div>
       
       {/* Legend */}
-      <div className="flex justify-between items-center mt-2 text-xs text-white/70">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-2 gap-2 text-xs text-white/70">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-green-500 rounded"></div>
             <span>Bids</span>
@@ -174,7 +198,7 @@ export default function DepthChart({
             </div>
           )}
         </div>
-        <div className="text-right">
+        <div className="text-right text-xs">
           <div>Price Range: ${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}</div>
           <div>Max Volume: {maxVolume.toFixed(4)}</div>
         </div>
